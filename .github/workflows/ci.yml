@@ -1,0 +1,21 @@
+name: CI
+
+on:
+  push:
+    branches: [ test ]
+  pull_request:
+    branches: [ test ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Make hello_world.sh executable
+      run: chmod +x hello_world.sh
+
+    - name: Run Hello World script
+      run: ./hello_world.sh
