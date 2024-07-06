@@ -64,3 +64,56 @@ echo "Hello World"
 
 Не забудьте зробити скрипт виконуваним за допомогою команди `chmod +x hello_world.sh` перед комітом у репозиторій.
 
+Щоб налаштувати GitHub Actions для виконання завдань лише на гілці `test`, ви можете змінити конфігураційний файл YAML наступним чином:
+
+```yaml
+name: CI
+
+on:
+  push:
+    branches: [ test ]
+  pull_request:
+    branches: [ test ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Make hello_world.sh executable
+      run: chmod +x hello_world.sh
+
+    - name: Run Hello World script
+      run: ./hello_world.sh
+```
+
+Цей файл налаштовує GitHub Actions таким чином:
+1. Виконує завдання тільки при пушах або запитах на злиття (pull request) в гілку `test`.
+2. Вказує, що робота буде виконуватись на останній версії Ubuntu.
+3. Виконує наступні кроки:
+   - Клонування репозиторію з GitHub.
+   - Змінює права на виконання для скрипта `hello_world.sh`.
+   - Запускає скрипт `hello_world.sh`.
+
+Ось кроки, як це зробити:
+1. Створіть новий файл `.github/workflows/ci.yml` (або змініть існуючий) у вашому репозиторії.
+2. Додайте або замініть вміст файлу на наведений вище приклад.
+3. Переконайтесь, що скрипт `hello_world.sh` знаходиться в кореневій директорії вашого репозиторію і має наступний вміст:
+
+```bash
+#!/bin/bash
+echo "Hello World"
+```
+
+4. Зробіть цей файл виконуваним, якщо це ще не зроблено:
+   ```bash
+   chmod +x hello_world.sh
+   ```
+
+5. Закомітьте і запуште ці зміни в гілку `test`.
+
+Після цього GitHub Actions буде запускати ваш скрипт тільки при пушах або запитах на злиття в гілку `test`.
+
