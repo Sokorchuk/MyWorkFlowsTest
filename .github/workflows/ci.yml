@@ -18,4 +18,6 @@ jobs:
       run: chmod +x hello_world.sh
 
     - name: Run Hello World script
-      run: ./hello_world.sh
+      run: |
+        ./hello_world.sh
+        ./hello_world222
