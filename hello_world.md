@@ -232,3 +232,39 @@ jobs:
 
 ---
 
+Щоб викликати свій скрипт лише при пуші файла з конкретним іменем у GitHub Actions, ви можете використовувати розділ `paths` у вашому workflow. Це дозволяє вам обмежити запуск робочого процесу до певних файлів або директорій.
+
+Ось приклад workflow, який запускається лише при пуші файла з ім'ям `specific-file.txt`:
+
+```yaml
+name: Run script on specific file push
+
+on:
+  push:
+    paths:
+      - specific-file.txt
+
+jobs:
+  run-script:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Run my script
+      run: ./my_script.sh
+```
+
+### Пояснення:
+
+1. **on.push.paths**: Ця секція визначає, що workflow повинен запускатися лише при пуші змін у файл `specific-file.txt`.
+2. **jobs.run-script**: Описує роботу, яка виконується на останній версії Ubuntu.
+3. **steps**:
+   - **Checkout repository**: Завантажує репозиторій для роботи з ним.
+   - **Run my script**: Виконує ваш скрипт `my_script.sh`.
+
+З таким налаштуванням ваш workflow буде запускатися лише тоді, коли файл з іменем `specific-file.txt` змінюється і пушиться в репозиторій.
+
+---
+
