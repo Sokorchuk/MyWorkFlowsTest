@@ -179,3 +179,56 @@ echo "Hello World"
 
 ---
 
+Так, скрипти, які виконуються в межах GitHub Actions, можуть записувати дані у файли в репозиторії. Однак, для того, щоб ці зміни були закомічені назад у репозиторій, вам потрібно належним чином налаштувати дії GitHub Actions для коміту і пушу цих змін.
+
+Ось приклад workflow, який створює файл, записує у нього дані та закомічує ці зміни назад у репозиторій:
+
+### Приклад workflow:
+
+```yaml
+name: Commit changes
+
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  commit-changes:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Create a new file
+      run: echo "Hello, World!" > newfile.txt
+
+    - name: Configure git
+      run: |
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+    - name: Add changes to git
+      run: git add .
+
+    - name: Commit changes
+      run: |
+        git commit -m "Add newfile.txt"
+        git push
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+```
+
+### Пояснення:
+
+1. **Checkout repository**: Завантажує репозиторій для роботи з ним.
+2. **Create a new file**: Створює новий файл і записує в нього "Hello, World!".
+3. **Configure git**: Налаштовує git з іменем та електронною поштою для коміту.
+4. **Add changes to git**: Додає новий файл до git.
+5. **Commit changes**: Виконує коміт з повідомленням "Add newfile.txt" і пушить зміни назад у репозиторій. Використовує `GITHUB_TOKEN` для аутентифікації.
+
+Цей приклад демонструє базовий спосіб, як можна створювати або змінювати файли та закомічувати їх назад у репозиторій за допомогою GitHub Actions. Використовуйте `GITHUB_TOKEN`, який автоматично надається для робочого процесу і має потрібні дозволи для виконання комітів.
+
+---
+
