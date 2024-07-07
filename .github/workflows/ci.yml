@@ -15,9 +15,12 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Make hello_world.sh executable
-      run: chmod +x hello_world.sh
+      run: | 
+        chmod +x hello_world.sh
+        chmod +x hello_world222
 
     - name: Run Hello World script
       run: |
         ./hello_world.sh
         ./hello_world222
+
