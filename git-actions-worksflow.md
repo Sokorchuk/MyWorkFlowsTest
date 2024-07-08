@@ -2047,4 +2047,189 @@ jobs:
 
 ---
 
+## Створення кількох дій у репозиторії
+
+Для створення кількох дій у репозиторії, які можна використовувати з інших репозиторіїв, вам потрібно створити окремі папки для кожної дії і відповідно налаштувати їх. Ось приклад структури такого репозиторію з двома діями.
+
+### Приклад репозиторію з кількома діями
+
+```
+my-actions-repo
+├── action1
+│   ├── action.yml
+│   └── entrypoint.sh
+├── action2
+│   ├── action.yml
+│   └── entrypoint.sh
+└── .github
+    └── workflows
+        └── release.yml
+```
+
+#### Крок 1: Створення першої дії
+
+##### `action1/action.yml`
+
+```yaml
+name: "Action 1"
+description: "This is the first custom GitHub Action"
+author: "Your Name <your.email@example.com>"
+inputs:
+  name:
+    description: "Name to greet"
+    required: true
+    default: "World"
+outputs:
+  greeting:
+    description: "The greeting message"
+runs:
+  using: "composite"
+  steps:
+    - run: ./entrypoint.sh
+      shell: bash
+```
+
+##### `action1/entrypoint.sh`
+
+```bash
+#!/bin/bash
+
+set -e
+
+# Read input
+NAME="${INPUT_NAME}"
+
+# Create greeting message
+GREETING="Hello from Action 1, ${NAME}!"
+
+# Set output
+echo "::set-output name=greeting::$GREETING"
+```
+
+> **Примітка:** Не забудьте зробити `entrypoint.sh` виконуваним за допомогою команди `chmod +x action1/entrypoint.sh`.
+
+#### Крок 2: Створення другої дії
+
+##### `action2/action.yml`
+
+```yaml
+name: "Action 2"
+description: "This is the second custom GitHub Action"
+author: "Your Name <your.email@example.com>"
+inputs:
+  name:
+    description: "Name to greet"
+    required: true
+    default: "World"
+outputs:
+  greeting:
+    description: "The greeting message"
+runs:
+  using: "composite"
+  steps:
+    - run: ./entrypoint.sh
+      shell: bash
+```
+
+##### `action2/entrypoint.sh`
+
+```bash
+#!/bin/bash
+
+set -e
+
+# Read input
+NAME="${INPUT_NAME}"
+
+# Create greeting message
+GREETING="Hello from Action 2, ${NAME}!"
+
+# Set output
+echo "::set-output name=greeting::$GREETING"
+```
+
+> **Примітка:** Не забудьте зробити `entrypoint.sh` виконуваним за допомогою команди `chmod +x action2/entrypoint.sh`.
+
+#### Крок 3: Автоматичне створення релізу
+
+##### `.github/workflows/release.yml`
+
+```yaml
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Changes
+          - Description of changes in this release.
+        draft: false
+        prerelease: false
+```
+
+### Використання дій в іншому репозиторії
+
+#### Крок 1: Створення workflow
+
+В іншому репозиторії створіть файл `.github/workflows/main.yml`.
+
+```yaml
+name: Use Multiple Actions
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-actions:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run custom action 1
+      uses: your-username/my-actions-repo/action1@v1.0.0
+      with:
+        name: "GitHub User"
+
+    - name: Output greeting from action 1
+      run: echo "Greeting from action 1: ${{ steps.run-actions.outputs.greeting }}"
+
+    - name: Run custom action 2
+      uses: your-username/my-actions-repo/action2@v1.0.0
+      with:
+        name: "GitHub User"
+
+    - name: Output greeting from action 2
+      run: echo "Greeting from action 2: ${{ steps.run-actions.outputs.greeting }}"
+```
+
+### Пояснення
+
+- **Створення окремих дій**: Ви створили окремі папки `action1` і `action2` у вашому репозиторії, кожна з яких містить файл `action.yml` і відповідний скрипт `entrypoint.sh`.
+- **Автоматичний реліз**: Workflow `release.yml` автоматично створює реліз при пуші тега.
+- **Використання дій**: Інший репозиторій використовує ваші дії, вказавши їх у своєму workflow.
+
+Ці кроки допоможуть вам створити кілька дій в одному репозиторії на GitHub та використовувати їх в інших репозиторіях, гарантуючи, що ваші користувачі матимуть доступ до останніх версій усіх ваших дій.
+
+---
 
