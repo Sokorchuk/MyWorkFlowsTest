@@ -2,7 +2,7 @@
 
 ---
 
-## Як створити pull request та вказати речензента
+## Як створити pull request та вказати рецензента
 
 Щоб виконати pull request на GitHub та вказати рецензента, виконайте наступні кроки:
 
@@ -1752,4 +1752,299 @@ runs:
 Таким чином, інші користувачі зможуть легко вказати версію вашої дії у своїх workflow, використовуючи тег або реліз, який ви створили.
 
 ---
+
+## Приклад створення GitHub Action у вашому репозиторії та використання цієї дії в іншому репозиторії.
+
+### Створення дії у власному репозиторії
+
+#### Крок 1: Створення структури файлів
+
+1. **Створіть новий репозиторій на GitHub**, наприклад, `my-custom-action`.
+2. У корені цього репозиторію створіть такі файли та папки:
+
+```
+my-custom-action
+├── action.yml
+├── index.js
+├── package.json
+└── .github
+    └── workflows
+        └── release.yml
+```
+
+#### Крок 2: Написання коду дії
+
+##### Файл `action.yml`
+
+```yaml
+name: "My Custom Action"
+description: "This is a custom GitHub Action that prints a greeting message"
+author: "Your Name <your.email@example.com>"
+inputs:
+  name:
+    description: "Name to greet"
+    required: true
+    default: "World"
+outputs:
+  greeting:
+    description: "The greeting message"
+runs:
+  using: "node12"
+  main: "index.js"
+```
+
+##### Файл `index.js`
+
+```javascript
+const core = require('@actions/core');
+
+try {
+  const name = core.getInput('name');
+  const greeting = `Hello, ${name}!`;
+  core.setOutput('greeting', greeting);
+} catch (error) {
+  core.setFailed(error.message);
+}
+```
+
+##### Файл `package.json`
+
+```json
+{
+  "name": "my-custom-action",
+  "version": "1.0.0",
+  "description": "A custom GitHub Action to print a greeting message",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@actions/core": "^1.2.6"
+  },
+  "author": "Your Name",
+  "license": "MIT"
+}
+```
+
+#### Крок 3: Автоматичне створення релізу
+
+##### Файл `.github/workflows/release.yml`
+
+```yaml
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v2
+      with:
+        node-version: '14'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Run tests
+      run: npm test
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Changes
+          - Description of changes in this release.
+        draft: false
+        prerelease: false
+```
+
+### Використання дії в іншому репозиторії
+
+#### Крок 1: Створення workflow
+
+У репозиторії, де ви хочете використовувати дію, створіть файл `.github/workflows/main.yml`.
+
+```yaml
+name: Run Custom Action
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-action:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run custom action
+      uses: your-username/my-custom-action@v1.0.0
+      with:
+        name: "GitHub User"
+
+    - name: Output greeting
+      run: echo "Greeting from action: ${{ steps.run-action.outputs.greeting }}"
+```
+
+### Пояснення
+
+- **Створення дії**: Ви створили дію у своєму репозиторії з файлом `action.yml`, що визначає дію, та файлом `index.js`, що реалізує її логіку.
+- **Автоматичний реліз**: Workflow `release.yml` автоматично створює реліз при пуші тега.
+- **Використання дії**: Інший репозиторій використовує вашу дію, вказавши її у своєму workflow.
+
+Ці кроки допоможуть вам створити дію в GitHub та використовувати її в інших репозиторіях, гарантуючи, що ваші користувачі завжди матимуть доступ до останньої версії.
+
+---
+
+## Приклад створення GitHub Action у вашому репозиторії за допомогою bash скрипта та використання цієї дії в іншому репозиторії.
+
+### Створення дії у власному репозиторії
+
+#### Крок 1: Створення структури файлів
+
+1. **Створіть новий репозиторій на GitHub**, наприклад, `my-bash-action`.
+2. У корені цього репозиторію створіть такі файли та папки:
+
+```
+my-bash-action
+├── action.yml
+├── entrypoint.sh
+└── .github
+    └── workflows
+        └── release.yml
+```
+
+#### Крок 2: Написання коду дії
+
+##### Файл `action.yml`
+
+```yaml
+name: "My Bash Action"
+description: "This is a custom GitHub Action that prints a greeting message using a bash script"
+author: "Your Name <your.email@example.com>"
+inputs:
+  name:
+    description: "Name to greet"
+    required: true
+    default: "World"
+outputs:
+  greeting:
+    description: "The greeting message"
+runs:
+  using: "composite"
+  steps:
+    - run: ./entrypoint.sh
+      shell: bash
+```
+
+##### Файл `entrypoint.sh`
+
+```bash
+#!/bin/bash
+
+set -e
+
+# Read input
+NAME="${INPUT_NAME}"
+
+# Create greeting message
+GREETING="Hello, ${NAME}!"
+
+# Set output
+echo "::set-output name=greeting::$GREETING"
+```
+
+> **Примітка:** Не забудьте зробити `entrypoint.sh` виконуваним за допомогою команди `chmod +x entrypoint.sh`.
+
+#### Крок 3: Автоматичне створення релізу
+
+##### Файл `.github/workflows/release.yml`
+
+```yaml
+name: Create Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        body: |
+          ## Changes
+          - Description of changes in this release.
+        draft: false
+        prerelease: false
+```
+
+### Використання дії в іншому репозиторії
+
+#### Крок 1: Створення workflow
+
+У репозиторії, де ви хочете використовувати дію, створіть файл `.github/workflows/main.yml`.
+
+```yaml
+name: Run Bash Action
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-action:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Run custom bash action
+      uses: your-username/my-bash-action@v1.0.0
+      with:
+        name: "GitHub User"
+
+    - name: Output greeting
+      run: echo "Greeting from action: ${{ steps.run-action.outputs.greeting }}"
+```
+
+### Пояснення
+
+- **Створення дії**: Ви створили дію у своєму репозиторії з файлом `action.yml`, що визначає дію, та файлом `entrypoint.sh`, що реалізує її логіку на bash.
+- **Автоматичний реліз**: Workflow `release.yml` автоматично створює реліз при пуші тега.
+- **Використання дії**: Інший репозиторій використовує вашу дію, вказавши її у своєму workflow.
+
+Ці кроки допоможуть вам створити дію в GitHub на bash та використовувати її в інших репозиторіях, гарантуючи, що ваші користувачі завжди матимуть доступ до останньої версії.
+
+---
+
 
